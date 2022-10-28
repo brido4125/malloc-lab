@@ -65,6 +65,11 @@ team_t team = {
 
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))//bp에서 현재 블럭의 사이즈를 더하면 다음 블럭의 payload의 시작주소 반환
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))//bp에서 이전 블럭의 사이즈를 배면 이전 블럭의 payload의 시작주소 반환
+
+static void *coalesce(void *bp);
+static void *extend_heap(size_t words);
+static void *first_fit(size_t asize);
+static void place(void *bp, size_t asize);
 /*
  * mm_init - initialize the malloc package.
  */
