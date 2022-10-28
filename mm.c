@@ -70,12 +70,41 @@ static void *coalesce(void *bp);
 static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
 static void place(void *bp, size_t asize);
+
+static char *heap_listp;
 /*
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
 {
+    if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1) {
+        return -1;
+    }
+    PUT(heap_listp,0);//Alignment Padding
+    PUT(heap_listp + (1 * WSIZE), PACK(DSIZE,1));//Prologue Header
+    PUT(heap_listp + (2 * WSIZE), PACK(DSIZE,1));//Prologue Footer
+    PUT(heap_listp + (3 * WSIZE), PACK(0,1));//Epilogue Header
+    heap_listp += (2 * WSIZE);// DSIZE로 변경 해보기
+
+    if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
+        return -1;
+    }
     return 0;
+}
+
+static void *extend_heap(size_t words){
+    char *bp;//Block Pointer
+    size_t size;
+    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
+    //long bp = mem_sbrk(size);
+    if ((long) (bp = mem_sbrk(size)) == -1) {
+        return NULL;
+    }
+    PUT(HDRP(bp), PACK(size,0));
+    PUT(FTRP(bp), PACK(size,0));
+    PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
+
+    return coalesce(bp);
 }
 
 /* 
