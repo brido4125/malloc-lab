@@ -165,8 +165,14 @@ static void *first_fit(size_t asize){
 
 static void *next_fit(size_t asize){
     char *bp;
-    for (bp = next_bp; GET_SIZE(HDRP(bp)); bp = NEXT_BLKP(bp)) {
+    for (bp = next_bp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
+            next_bp = bp;
+            return bp;
+        }
+    }
+    for (bp = heap_listp; bp < next_bp; bp = NEXT_BLKP(bp)) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             next_bp = bp;
             return bp;
         }
