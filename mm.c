@@ -77,8 +77,10 @@ static void *coalesce(void *bp);
 static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
 static void place(void *bp, size_t asize);
+static void *next_fit(size_t asize);
 
 static char *heap_listp;
+static char *heap_next_pointer = NULL;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -135,7 +137,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
 
-    if ((bp = first_fit(asize)) != NULL) {
+    if ((bp = next_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -155,6 +157,19 @@ static void *first_fit(size_t asize){
         if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
             //first_fit 조건 만족하니 return
             return bp;
+        }
+    }
+    return NULL;
+}
+
+static void *next_fit(size_t asize){
+    //block을 쭉 돌면서 찾아야함
+    if (heap_next_pointer == NULL) {
+        heap_next_pointer = heap_listp;
+    }
+    for (; GET_SIZE(HDRP(heap_next_pointer)) > 0; heap_next_pointer = NEXT_BLKP(heap_next_pointer)) {
+        if (((asize) <= GET_SIZE(HDRP(heap_next_pointer))) && !GET_ALLOC(HDRP(heap_next_pointer))) {
+            return heap_next_pointer;
         }
     }
     return NULL;
