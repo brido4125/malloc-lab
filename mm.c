@@ -24,11 +24,11 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "ateam",
+    "jungle5A",
     /* First member's full name */
-    "Harry Bovik",
+    "Brido",
     /* First member's email address */
-    "bovik@cs.cmu.edu",
+    "brido@cs.cmu.edu",
     /* Second member's full name (leave blank if none) */
     "",
     /* Second member's email address (leave blank if none) */
@@ -44,7 +44,28 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* 
+/*MACRO 함수 및 할당기에서 사용할 상수 정의*/
+#define WSIZE       4 // Word 사이즈를 4 byte로 할당
+#define DSIZE       8 // Double Word 사이즈는 8 byte로 할당
+#define CHUNKSIZE   (1<<12) // 할당할 Heap의 사이즈 대략 4096 byte(4KB) 정도, 추후 4096으로 변경하고 실험 필요
+
+#define MAX(x,y) ((x) > (y) ? (x) : (y) //x,y와 중 더 큰 숫자 return
+
+#define PACK(size,alloc) ((size) | (alloc)) // or bit 연산으로 헤더 또는 푸터에 들어갈 size의 크기 및 할당 유무 비트 연산
+
+//p는 (void*) 포인터이며, 직접 * 연산을 사용할 수 없음
+#define GET(p) (*(unsigned int*)(p)) // p라는 주소가 가지고 있는 값(워드)을 리턴
+#define PUT(p,val) (*(unsigned int*)(p) = (val)) //p라는 주소가 가지고 있는 값을 val을 대입
+
+#define GET_SIZE(p) (GET(p) & ~0x7) // 헤더 또는 푸터의 size 값 리턴
+#define GET_ALLOC(p) (GET(p) & 0x1) // 해당 블럭의 할당 유무 (0 또는 1)를 리턴
+
+#define HDRP(bp) ((char *)(bp) - WSIZE) // 헤더의 포인터(주소) 반환
+#define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp) - DSIZE) // 헤더의 포인터(주소) 반환
+
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))//bp에서 현재 블럭의 사이즈를 더하면 다음 블럭의 payload의 시작주소 반환
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))//bp에서 이전 블럭의 사이즈를 배면 이전 블럭의 payload의 시작주소 반환
+/*
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
