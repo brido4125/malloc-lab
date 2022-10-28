@@ -78,6 +78,7 @@ static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
 static void place(void *bp, size_t asize);
 static void *next_fit(size_t asize);
+static void *best_fit(size_t asize);
 
 static char *heap_listp;
 /*
@@ -144,7 +145,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
 
-    if ((bp = next_fit(asize)) != NULL) {
+    if ((bp = best_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -189,6 +190,30 @@ static void *next_fit(size_t asize){
     }
     //그래도 없으면 NULL 반환
     return NULL;
+}
+
+static void *best_fit(size_t asize){
+    char *bp;
+    char *return_bp;
+    /*
+     * best-fit 전략 : for문 다 돌면서 (currentSize - asize)가 작은 pointer를 리턴
+     * */
+    size_t min = SIZE_MAX;
+
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (((asize) <= GET_SIZE(HDRP(bp))) && (!GET_ALLOC(HDRP(bp)))) {
+            size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
+            if (remainSize == 0) {
+                return bp;
+            }
+            if (min > remainSize) {
+                min = remainSize;
+                return_bp = bp;
+            }
+
+        }
+    }
+    return return_bp;
 }
 
 static void place(void *bp, size_t asize){
