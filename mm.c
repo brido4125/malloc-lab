@@ -80,7 +80,7 @@ static void place(void *bp, size_t asize);
 static void *next_fit(size_t asize);
 
 static char *heap_listp;
-static char *heap_next_pointer = NULL;
+static char *next_bp; // next-fit을 위한 포인터
 /*
  * mm_init - initialize the malloc package.
  */
@@ -94,6 +94,7 @@ int mm_init(void)
     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE,1));//Prologue Footer
     PUT(heap_listp + (3 * WSIZE), PACK(0,1));//Epilogue Header
     heap_listp += (2 * WSIZE);// DSIZE로 변경 해보기
+    next_bp = heap_listp;
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
@@ -163,13 +164,11 @@ static void *first_fit(size_t asize){
 }
 
 static void *next_fit(size_t asize){
-    //block을 쭉 돌면서 찾아야함
-    if (heap_next_pointer == NULL) {
-        heap_next_pointer = heap_listp;
-    }
-    for (; GET_SIZE(HDRP(heap_next_pointer)) > 0; heap_next_pointer = NEXT_BLKP(heap_next_pointer)) {
-        if (((asize) <= GET_SIZE(HDRP(heap_next_pointer))) && !GET_ALLOC(HDRP(heap_next_pointer))) {
-            return heap_next_pointer;
+    char *bp;
+    for (bp = next_bp; GET_SIZE(HDRP(bp)); bp = NEXT_BLKP(bp)) {
+        if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
+            next_bp = bp;
+            return bp;
         }
     }
     return NULL;
