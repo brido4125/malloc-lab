@@ -113,15 +113,64 @@ static void *extend_heap(size_t words){
  */
 void *mm_malloc(size_t size)
 {
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
-	return NULL;
-    else {
-        *(size_t *)p = size;
-        return (void *)((char *)p + SIZE_T_SIZE);
+    size_t asize;
+    size_t extendsize;
+    char *bp;
+
+    if (size == 0) {
+        return NULL;
+    }
+    if (size <= DSIZE) {
+        asize = 2 * DSIZE;//8byte는 헤더 + 푸터만의 최소 블록 크기이므로, 그 다음 8의 배수인 16바이트로 설정
+    }
+    //size가 8보다 크다면
+    else{
+        asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
+    }
+
+    if ((bp = first_fit(asize)) != NULL) {
+        place(bp, asize);
+        return bp;
+    }
+    //fit 전략이 성공하지 않은 경우, asize 또는 CHUNKSIZE만큼 가용 리스트의 범위를 넓혀준다.
+    extendsize = MAX(asize, CHUNKSIZE));
+    if ((bp = extend_heap(extendsize / WSIZE)) == NULL) {
+        return NULL;
+    }
+    place(bp, asize);
+    return bp;
+}
+
+static void *first_fit(size_t asize){
+    //block을 쭉 돌면서 찾아야함
+    char *bp;//Prologue 블럭 이후 첫 번째 block
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (((asize) <= GET_SIZE(HDRP(bp))) && GET_ALLOC(HDRP(bp)) != 0) {
+            //first_fit 조건 만족하니 return
+            return bp;
+        }
+    }
+    return NULL;
+}
+
+static void place(void *bp, size_t asize){
+    //bp가 find_fit을 통해 얻은 블럭 주소 또는 extend_heap을 통해 얻은 블럭 주소
+    //요청한 블록을 가용 블록의 시작 부분에 배치
+    size_t current_size = GET_SIZE(HDRP(bp));
+    if ((current_size - asize) > 2 * DSIZE) {
+        //asize만큼으로 bp의 사이즈를 변경해주었기에 NEXT_BLKP 시 처음 할당 받은 bp 블럭 내의 포인터로 이동한다.
+        PUT(HDRP(bp), PACK(asize, 1));
+        PUT(FTRP(bp), PACK(asize, 1));
+        bp = NEXT_BLKP(bp);
+        PUT(HDRP(bp), PACK(current_size - asize),0);
+        PUT(FTRP(bp), PACK(current_size - asize),0);
+    }
+    else{
+        PUT(HDRP(bp), PACK(current_size, 1));
+        PUT(FTRP(bp), PACK(current_size, 1));
     }
 }
+
 
 /*
  * mm_free - Freeing a block does nothing.
@@ -151,12 +200,16 @@ static void *coalesce(void *bp){
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size,0));
         PUT(FTRP(bp), PACK(size,0));
-    } else if (!prev_alloc && next_alloc) {
+    }
+    // prev가 Free인 경우
+    else if (!prev_alloc && next_alloc) {
         size += GET_SIZE(FTRP(PREV_BLKP(bp))));
         PUT(FTRP(bp), PACK(size, 0)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
-    }else{
+    }
+    //양쪽 모두 Free인 경우
+    else{
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp))));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
