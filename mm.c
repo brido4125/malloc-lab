@@ -80,7 +80,13 @@ static void place(void *bp, size_t asize);
 static void *next_fit(size_t asize);
 
 static char *heap_listp;
-static char *next_bp; // next-fit을 위한 포인터
+/*
+ * next_bp 변경지점
+ * 1) 처음에 Prologue Block의 heap_listp로 지정
+ * 2) fit 될 경우 next_bp 업데이트
+ * 3) coalescing 경우에도 next_bp 업데이트
+ * */
+static char *next_bp;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -138,7 +144,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
 
-    if ((bp = first_fit(asize)) != NULL) {
+    if ((bp = next_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -165,18 +171,23 @@ static void *first_fit(size_t asize){
 
 static void *next_fit(size_t asize){
     char *bp;
+    /*
+     * 최근 지점부터 끝까지 search
+     * */
     for (bp = next_bp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
             next_bp = bp;
             return bp;
         }
     }
+    //없으면 처음부터 next_bp 지점까지 search
     for (bp = heap_listp; bp < next_bp; bp = NEXT_BLKP(bp)) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             next_bp = bp;
             return bp;
         }
     }
+    //그래도 없으면 NULL 반환
     return NULL;
 }
 
@@ -241,6 +252,7 @@ static void *coalesce(void *bp){
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
     }
+    next_bp = bp;
     return bp;
 }
 
