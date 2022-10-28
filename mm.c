@@ -195,7 +195,7 @@ static void *next_fit(size_t asize){
 
 static void *best_fit(size_t asize){
     char *bp;
-    char *return_bp;
+    char *return_bp = NULL;
     /*
      * best-fit 전략 : for문 다 돌면서 (currentSize - asize)가 작은 pointer를 리턴
      * */
@@ -213,6 +213,9 @@ static void *best_fit(size_t asize){
             }
 
         }
+    }
+    if (return_bp == NULL) {
+        return NULL;
     }
     return return_bp;
 }
