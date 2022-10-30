@@ -10,7 +10,7 @@
  * comment that gives a high level description of your solution.
  */
 #include <stdio.h>
-#include <stdlib.h>₩
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
