@@ -49,6 +49,8 @@ team_t team = {
 #define WSIZE 4 // Word 사이즈를 4 byte로 할당
 #define DSIZE 8 // Double Word 사이즈는 8 byte로 할당
 #define CHUNKSIZE (1<<12) // 할당할 Heap의 사이즈 대략 4096 byte(4KB) 정도, 추후 4096으로 변경하고 실험 필요
+#define MINIMUM 16 //Explicit 방식의 블럭에서 필요한 최소 노드의 크기
+
 
 #define MAX(x,y) ((x)>(y)? (x) : (y))
 
@@ -74,6 +76,10 @@ team_t team = {
 //bp에서 이전 블럭의 사이즈를 배면 이전 블럭의 payload의 시작주소 반환
 #define PREV_BLKP(bp) ((char*)(bp) - GET_SIZE(((char*)(bp) - DSIZE)))
 
+/* Explicit의 Free List 상에서의 이전, 이후의 블럭의 포인터를 리턴 */
+# define PRED_FREEP(bp) (*(char**)(bp))
+# define SUCC_FREEP(bp) (*(char**)(bp + WSIZE))
+
 static void *coalesce(void *bp);
 static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
@@ -82,13 +88,7 @@ static void *next_fit(size_t asize);
 static void *best_fit(size_t asize);
 
 static char *heap_listp;
-/*
- * next_bp 변경지점
- * 1) 처음에 Prologue Block의 heap_listp로 지정
- * 2) fit 될 경우 next_bp 업데이트
- * 3) coalescing 경우에도 next_bp 업데이트
- * */
-static char *next_bp;
+static char *free_listp;
 /*
  * mm_init - initialize the malloc package.
  */
