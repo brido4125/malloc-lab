@@ -162,14 +162,7 @@ void *mm_malloc(size_t size)
     if (size == 0) {
         return NULL;
     }
-    // 요청 사이즈에 header와 footer를 위한 double word 공간 만큼 추가 할당해서 Align
-    if (size <= DSIZE) {
-        asize = 2 * DSIZE;//8byte는 헤더 + 푸터만의 최소 블록 크기이므로, 그 다음 8의 배수인 16바이트로 설정
-    }
-    //size가 8보다 크다면
-    else{
-        asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
-    }
+    asize = ALIGN(size + SIZE_T_SIZE);
 
     if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
