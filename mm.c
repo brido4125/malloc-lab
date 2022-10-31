@@ -108,7 +108,7 @@ int mm_init(void)
     PUT(heap_listp + (4 * WSIZE), PACK(MINIMUM,1));//Prologue Footer
     PUT(heap_listp + (5 * WSIZE), PACK(0,1));//Epilogue Header
 
-    heap_listp += (2 * WSIZE)
+    heap_listp += (2 * WSIZE);
     free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
