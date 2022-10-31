@@ -188,7 +188,7 @@ static void *first_fit(size_t asize){
 static void *best_fit(size_t asize){
     //block을 쭉 돌면서 찾아야함
     char *bp;//Prologue 블럭 이후 첫 번째 block
-    char *return_bp;
+    char *return_bp = NULL;
     size_t min = SIZE_MAX;
     for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 1; bp = SUCC_FREEP(bp)) {
         size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
