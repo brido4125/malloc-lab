@@ -87,8 +87,8 @@ static void place(void *bp, size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
-static char *heap_listp;
-static char *free_listp;
+static char *heap_listp = NULL;
+static char *free_listp = NULL;
 /*
  * mm_init - initialize the malloc package.
  */
