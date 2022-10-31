@@ -83,6 +83,7 @@ team_t team = {
 static void *coalesce(void *bp);
 static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
+static void *best_fit(size_t asize);
 static void place(void *bp, size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
@@ -159,7 +160,7 @@ void *mm_malloc(size_t size)
     else{
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
-    if ((bp = first_fit(asize)) != NULL) {
+    if ((bp = best_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -182,6 +183,27 @@ static void *first_fit(size_t asize){
         }
     }
     return NULL;
+}
+
+static void *best_fit(size_t asize){
+    //block을 쭉 돌면서 찾아야함
+    char *bp;//Prologue 블럭 이후 첫 번째 block
+    char *return_bp;
+    size_t min = SIZE_MAX;
+    for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 1; bp = SUCC_FREEP(bp)) {
+        size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
+        if (remainSize == 0) {
+            return bp;
+        }
+        if (min > remainSize) {
+            min = remainSize;
+            return_bp = bp;
+        }
+    }
+    if (return_bp == NULL) {
+        return NULL;
+    }
+    return return_bp;
 }
 
 
