@@ -164,7 +164,7 @@ void *mm_malloc(size_t size)
     }
     asize = ALIGN(size + SIZE_T_SIZE);
 
-    if ((bp = first_fit(asize)) != NULL) {
+    if ((bp = next_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
