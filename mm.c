@@ -84,20 +84,11 @@ static void *coalesce(void *bp);
 static void *extend_heap(size_t words);
 static void *first_fit(size_t asize);
 static void place(void *bp, size_t asize);
-static void *next_fit(size_t asize);
-static void *best_fit(size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
 static char *heap_listp;
 static char *free_listp;
-/*
- * next_bp 변경지점
- * 1) 처음에 Prologue Block의 heap_listp로 지정
- * 2) fit 될 경우 next_bp 업데이트
- * 3) coalescing 경우에도 next_bp 업데이트
- * */
-static char *next_bp;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -119,7 +110,6 @@ int mm_init(void)
 
     heap_listp += (2 * WSIZE);// heap_listp의 초기 주소값 = 시작지점 + 2Word
     free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
-    next_bp = heap_listp;
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
@@ -164,7 +154,7 @@ void *mm_malloc(size_t size)
     }
     asize = ALIGN(size + SIZE_T_SIZE);
 
-    if ((bp = next_fit(asize)) != NULL) {
+    if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -189,54 +179,6 @@ static void *first_fit(size_t asize){
     return NULL;
 }
 
-static void *next_fit(size_t asize){
-    char *bp;
-    /*
-     * 최근 지점부터 끝까지 search
-     * */
-    for (bp = next_bp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
-            next_bp = bp;
-            return bp;
-        }
-    }
-    //없으면 처음부터 next_bp 지점까지 search
-    for (bp = heap_listp; bp < next_bp; bp = NEXT_BLKP(bp)) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            next_bp = bp;
-            return bp;
-        }
-    }
-    //그래도 없으면 NULL 반환
-    return NULL;
-}
-
-static void *best_fit(size_t asize){
-    char *bp;
-    char *return_bp = NULL;
-    /*
-     * best-fit 전략 : for문 다 돌면서 (currentSize - asize)가 작은 pointer를 리턴
-     * */
-    size_t min = SIZE_MAX;
-
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (((asize) <= GET_SIZE(HDRP(bp))) && (!GET_ALLOC(HDRP(bp)))) {
-            size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
-            if (remainSize == 0) {
-                return bp;
-            }
-            if (min > remainSize) {
-                min = remainSize;
-                return_bp = bp;
-            }
-
-        }
-    }
-    if (return_bp == NULL) {
-        return NULL;
-    }
-    return return_bp;
-}
 
 static void place(void *bp, size_t asize){
     //bp가 find_fit을 통해 얻은 블럭 주소 또는 extend_heap을 통해 얻은 블럭 주소
@@ -306,7 +248,6 @@ static void *coalesce(void *bp){
         bp = PREV_BLKP(bp);
     }
     putFreeBlock(bp);
-    next_bp = bp;
     return bp;
 }
 
