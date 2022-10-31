@@ -94,15 +94,22 @@ static char *free_listp;
  */
 int mm_init(void)
 {
-    if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1) {
+    /*
+     * 6워드 size = 미사용 패딩(1Byte) + Prologue(4byte) + Epilogue(1Byte)
+     * 만큼 메모리로부터 가져옴, 실패시 -1 return
+     * */
+    if ((heap_listp = mem_sbrk(6 * WSIZE)) == (void *) -1) {
         return -1;
     }
     PUT(heap_listp,0);//Alignment Padding
-    PUT(heap_listp + (1 * WSIZE), PACK(DSIZE,1));//Prologue Header
-    PUT(heap_listp + (2 * WSIZE), PACK(DSIZE,1));//Prologue Footer
-    PUT(heap_listp + (3 * WSIZE), PACK(0,1));//Epilogue Header
-    heap_listp += (2 * WSIZE);// DSIZE로 변경 해보기
-    next_bp = heap_listp;
+    PUT(heap_listp + (1 * WSIZE), PACK(MINIMUM,1));//Prologue Header
+    PUT(heap_listp + (2 * WSIZE), NULL); //Prologue Block내의 PREC 포인터 초기값 = NULL
+    PUT(heap_listp + (3 * WSIZE), NULL); //Prologue Block내의 PREC 포인터 초기값 = NULL
+    PUT(heap_listp + (4 * WSIZE), PACK(MINIMUM,1));//Prologue Footer
+    PUT(heap_listp + (5 * WSIZE), PACK(0,1));//Epilogue Header
+
+    heap_listp += (2 * WSIZE);// heap_listp의 초기 주소값 = 시작지점 + 2Word
+    free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
