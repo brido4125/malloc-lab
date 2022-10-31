@@ -88,7 +88,7 @@ void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
 static char *heap_listp;
-static char *free_listp = NULL;
+static char *free_listp;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -108,7 +108,8 @@ int mm_init(void)
     PUT(heap_listp + (4 * WSIZE), PACK(MINIMUM,1));//Prologue Footer
     PUT(heap_listp + (5 * WSIZE), PACK(0,1));//Epilogue Header
 
-    free_listp = heap_listp + (2 * WSIZE);// 사용할 이중 연결 리스트의 시작점 -> free_listp
+    heap_listp += (2 * WSIZE)
+    free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
@@ -123,7 +124,7 @@ static void *extend_heap(size_t words){
     char *bp;//Block Pointer
     size_t size;
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;//Double Word 정책에 따라 짝수 형태로 변환
-    bp = mem_sbrk(size);//변경 지점
+    bp = mem_sbrk(size);//현재 할당된 블럭의 가장 마지막 주소(힙 영역의 마지막 주소)
     if ((long)bp == -1) {
         return NULL;
     }
@@ -131,9 +132,9 @@ static void *extend_heap(size_t words){
      * 새롭게 할당 받은 가용 block의 header와 footer 설정
      * bp = 새롭게 할당 받은 블럭의 시작 주소
      * */
-    PUT(HDRP(bp), PACK(size,0));
+    PUT(HDRP(bp), PACK(size,0));//기존에 할당된 Epilogue 블럭 초기화
     PUT(FTRP(bp), PACK(size,0));
-    PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
+    PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));//새로운 Epilogue 블럭
 
     return coalesce(bp);
 }
@@ -169,8 +170,8 @@ void *mm_malloc(size_t size)
 static void *first_fit(size_t asize){
     //block을 쭉 돌면서 찾아야함
     char *bp;//Prologue 블럭 이후 첫 번째 block
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (((asize) <= GET_SIZE(HDRP(bp))) && !GET_ALLOC(HDRP(bp))) {
+    for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 1; bp = SUCC_FREEP(bp)) {
+        if (asize <= GET_SIZE(HDRP(bp))) {
             //first_fit 조건 만족하니 return
             return bp;
         }
