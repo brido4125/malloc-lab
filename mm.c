@@ -10,7 +10,7 @@
  * comment that gives a high level description of your solution.
  */
 #include <stdio.h>
-#include <stdlib.h>₩
+#include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
@@ -86,9 +86,18 @@ static void *first_fit(size_t asize);
 static void place(void *bp, size_t asize);
 static void *next_fit(size_t asize);
 static void *best_fit(size_t asize);
+void putFreeBlock(void* bp);
+void removeBlock(void* bp);
 
 static char *heap_listp;
 static char *free_listp;
+/*
+ * next_bp 변경지점
+ * 1) 처음에 Prologue Block의 heap_listp로 지정
+ * 2) fit 될 경우 next_bp 업데이트
+ * 3) coalescing 경우에도 next_bp 업데이트
+ * */
+static char *next_bp;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -110,6 +119,7 @@ int mm_init(void)
 
     heap_listp += (2 * WSIZE);// heap_listp의 초기 주소값 = 시작지점 + 2Word
     free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
+    next_bp = heap_listp;
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
@@ -124,7 +134,7 @@ static void *extend_heap(size_t words){
     char *bp;//Block Pointer
     size_t size;
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;//Double Word 정책에 따라 짝수 형태로 변환
-    char* bp = mem_sbrk(size);//변경 지점
+    bp = mem_sbrk(size);//변경 지점
     if ((long)bp == -1) {
         return NULL;
     }
@@ -152,6 +162,7 @@ void *mm_malloc(size_t size)
     if (size == 0) {
         return NULL;
     }
+    // 요청 사이즈에 header와 footer를 위한 double word 공간 만큼 추가 할당해서 Align
     if (size <= DSIZE) {
         asize = 2 * DSIZE;//8byte는 헤더 + 푸터만의 최소 블록 크기이므로, 그 다음 8의 배수인 16바이트로 설정
     }
@@ -160,7 +171,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
 
-    if ((bp = best_fit(asize)) != NULL) {
+    if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -238,6 +249,7 @@ static void place(void *bp, size_t asize){
     //bp가 find_fit을 통해 얻은 블럭 주소 또는 extend_heap을 통해 얻은 블럭 주소
     //요청한 블록을 가용 블록의 시작 부분에 배치
     size_t current_size = GET_SIZE(HDRP(bp));
+    removeBlock(bp);
     if ((current_size - asize) > 2 * DSIZE) {
         //asize만큼으로 bp의 사이즈를 변경해주었기에 NEXT_BLKP 시 처음 할당 받은 bp 블럭 내의 포인터로 이동한다.
         PUT(HDRP(bp), PACK(asize, 1));
@@ -245,6 +257,7 @@ static void place(void *bp, size_t asize){
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(current_size - asize,0));
         PUT(FTRP(bp), PACK(current_size - asize,0));
+        putFreeBlock(bp);
     }
     else{
         PUT(HDRP(bp), PACK(current_size, 1));
@@ -272,8 +285,7 @@ static void *coalesce(void *bp){
 
     //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
     if (prev_alloc && next_alloc) {
-        return bp;
-
+        return bp;//변경지점
     }
     // next가 Free인 경우
     else if (prev_alloc && !next_alloc) {
@@ -295,10 +307,33 @@ static void *coalesce(void *bp){
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
     }
+    putFreeBlock(bp);
     next_bp = bp;
     return bp;
 }
 
+void putFreeBlock(void* bp){
+    SUCC_FREEP(bp) = free_listp;
+    PRED_FREEP(bp) = NULL;
+    PRED_FREEP(free_listp) = bp;
+    free_listp = bp;
+}
+
+void removeBlock(void* bp){
+    //free list의 첫번째 블록을 없앨 때
+    if (bp == free_listp) {
+        PRED_FREEP(SUCC_FREEP(bp)) = NULL;
+        free_listp = SUCC_FREEP(bp);
+    }
+    /*
+     * 현재 할당 받는 블럭이 리스트의 첫번째 노드가 아닌 경우
+     * 할당 될 노드 기준 앞 뒤 노드를 서로 이중 연결 해줘야한다.
+     * */
+    else{
+        SUCC_FREEP(PRED_FREEP(bp)) = SUCC_FREEP(bp);
+        PRED_FREEP(SUCC_FREEP(bp)) = PRED_FREEP(bp);
+    }
+}
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
