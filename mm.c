@@ -152,8 +152,13 @@ void *mm_malloc(size_t size)
     if (size == 0) {
         return NULL;
     }
-    asize = ALIGN(size + SIZE_T_SIZE);
-
+    if (size <= DSIZE) {
+        asize = 2 * DSIZE;//8byte는 헤더 + 푸터만의 최소 블록 크기이므로, 그 다음 8의 배수인 16바이트로 설정
+    }
+        //size가 8보다 크다면
+    else{
+        asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
+    }
     if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
