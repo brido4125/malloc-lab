@@ -87,7 +87,7 @@ static void place(void *bp, size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
-static char *heap_listp = NULL;
+static char *heap_listp;
 static char *free_listp = NULL;
 /*
  * mm_init - initialize the malloc package.
@@ -108,7 +108,7 @@ int mm_init(void)
     PUT(heap_listp + (4 * WSIZE), PACK(MINIMUM,1));//Prologue Footer
     PUT(heap_listp + (5 * WSIZE), PACK(0,1));//Epilogue Header
 
-    free_listp = heap_listp + 2*WSIZE;// 사용할 이중 연결 리스트의 시작점 -> free_listp
+    free_listp = heap_listp + (2 * WSIZE);// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
