@@ -290,12 +290,14 @@ static void *coalesce(void *bp){
     }
     // next가 Free인 경우
     else if (prev_alloc && !next_alloc) {
+        removeBlock(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size,0));
         PUT(FTRP(bp), PACK(size,0));
     }
     // prev가 Free인 경우
     else if (!prev_alloc && next_alloc) {
+        removeBlock(PREV_BLKP(bp));
         size += GET_SIZE(FTRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
@@ -303,6 +305,8 @@ static void *coalesce(void *bp){
     }
     //양쪽 모두 Free인 경우
     else{
+        removeBlock(PREV_BLKP(bp));
+        removeBlock(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
