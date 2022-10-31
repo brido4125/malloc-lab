@@ -285,6 +285,7 @@ static void *coalesce(void *bp){
 
     //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
     if (prev_alloc && next_alloc) {
+        putFreeBlock(bp);
         return bp;//변경지점
     }
     // next가 Free인 경우
