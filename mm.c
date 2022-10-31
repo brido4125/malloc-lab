@@ -117,14 +117,21 @@ int mm_init(void)
     return 0;
 }
 
+/*
+ * Word 단위의 메모리 크기를 인자로 받아 현재 힙의 사이즈를 늘려주는 메서드
+ * */
 static void *extend_heap(size_t words){
     char *bp;//Block Pointer
     size_t size;
-    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-    //long bp = mem_sbrk(size);
-    if ((long) (bp = mem_sbrk(size)) == -1) {
+    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;//Double Word 정책에 따라 짝수 형태로 변환
+    char* bp = mem_sbrk(size);//변경 지점
+    if ((long)bp == -1) {
         return NULL;
     }
+    /*
+     * 새롭게 할당 받은 가용 block의 header와 footer 설정
+     * bp = 새롭게 할당 받은 블럭의 시작 주소
+     * */
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
