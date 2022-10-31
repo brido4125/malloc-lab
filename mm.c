@@ -174,8 +174,7 @@ void *mm_malloc(size_t size)
 }
 
 static void *first_fit(size_t asize){
-    //block을 쭉 돌면서 찾아야함
-    char *bp;//Prologue 블럭 이후 첫 번째 block
+    char *bp;
     for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 1; bp = SUCC_FREEP(bp)) {
         if (asize <= GET_SIZE(HDRP(bp))) {
             //first_fit 조건 만족하니 return
@@ -186,18 +185,19 @@ static void *first_fit(size_t asize){
 }
 
 static void *best_fit(size_t asize){
-    //block을 쭉 돌면서 찾아야함
-    char *bp;//Prologue 블럭 이후 첫 번째 block
+    char *bp;
     char *return_bp = NULL;
     size_t min = SIZE_MAX;
     for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 1; bp = SUCC_FREEP(bp)) {
-        size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
-        if (remainSize == 0) {
-            return bp;
-        }
-        if (min > remainSize) {
-            min = remainSize;
-            return_bp = bp;
+        if (GET_SIZE(HDRP(bp)) >= asize) {
+            size_t remainSize = GET_SIZE(HDRP(bp)) - asize;
+            if (remainSize == 0) {
+                return bp;
+            }
+            if (min > remainSize) {
+                min = remainSize;
+                return_bp = bp;
+            }
         }
     }
     if (return_bp == NULL) {
