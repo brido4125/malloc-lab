@@ -108,8 +108,7 @@ int mm_init(void)
     PUT(heap_listp + (4 * WSIZE), PACK(MINIMUM,1));//Prologue Footer
     PUT(heap_listp + (5 * WSIZE), PACK(0,1));//Epilogue Header
 
-    heap_listp += (2 * WSIZE);// heap_listp의 초기 주소값 = 시작지점 + 2Word
-    free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
+    free_listp = heap_listp + 2*WSIZE;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
         return -1;
