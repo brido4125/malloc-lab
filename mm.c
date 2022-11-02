@@ -321,7 +321,7 @@ void removeBlock(void* bp){
 
 void *mm_realloc(void *ptr, size_t size)
 {
-
+    printf("here is realloc");
     if (size < 0) {
         return NULL;
     }
