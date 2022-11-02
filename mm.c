@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include<semaphore.h>
+#include<pthread.h>
 
 #include "mm.h"
 #include "memlib.h"
@@ -101,7 +103,7 @@ void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
 static char *heap_listp;
-static char *free_listp;
+char *free_listp;
 /*
  * mm_init - initialize the malloc package.
  */
