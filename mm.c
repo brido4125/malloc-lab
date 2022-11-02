@@ -246,7 +246,6 @@ static void place(void *bp, size_t asize){
 void mm_free(void *bp)
 {
     size_t size = GET_SIZE(HDRP(bp));
-
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
     coalesce(bp);
@@ -298,8 +297,11 @@ void putFreeBlock(void* bp){
 }
 
 void removeBlock(void* bp){
+    printf("in removeBlock");
+    printf("bp = %p", bp);
+    printf("free_listp = %p", free_listp);
     //free list의 첫번째 블록을 없앨 때
-    if (bp == free_listp) {
+    if (PRED_FREEP(bp) == NULL) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
@@ -323,7 +325,6 @@ void removeBlock(void* bp){
 void *mm_realloc(void *ptr, size_t size)
 {
 
-    dbg_printf("Calling mm_realloc");
     if (size < 0) {
         return NULL;
     }
@@ -334,12 +335,14 @@ void *mm_realloc(void *ptr, size_t size)
     size_t old_size = GET_SIZE(HDRP(ptr));
     size_t new_size = size + DSIZE;
 
-    int remain = old_size - new_size;
     /*
      * old_size가 new_size보다 크거나 같을 경우
      * 해당 블럭에서 realloc 가능하니 바로 리턴
      * */
-
+    if (new_size <= old_size) {
+        return ptr;
+    }
+    int remain = old_size - new_size;
     /*
     * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
     * */
@@ -353,32 +356,27 @@ void *mm_realloc(void *ptr, size_t size)
         //putFreeBlock(new_remain_block);
         return new_remain_block;
     }
-    else if (remain >= 0){
-        return ptr;
-    }
         /*
          * remain이 음수인 경우, 즉 현재 블럭의 공간으로 realloc이 요구하는 사이즈를 감당하지 못하는 경우
          * 새로운 malloc을 통해 주소를 새롭게 할당 받아야 한다.
          * */
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));//다음 블럭의 가용 여부 확인
+    size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
+    //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
+    if (!next_alloc && available_size >= new_size) {
+        removeBlock(NEXT_BLKP(ptr));
+        PUT(HDRP(ptr), PACK(available_size, 1));
+        PUT(FTRP(ptr), PACK(available_size, 1));
+        return ptr;
+    }
+        //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
+        //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
     else{
-        size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));//다음 블럭의 가용 여부 확인
-        size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
-        //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
-        if (!next_alloc && available_size >= new_size) {
-            removeBlock(NEXT_BLKP(ptr));
-            PUT(HDRP(ptr), PACK(available_size, 1));
-            PUT(FTRP(ptr), PACK(available_size, 1));
-            return ptr;
-        }
-            //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
-            //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
-        else{
-            void *new_bp = mm_malloc(new_size);
-            place(new_bp, new_size);
-            memcpy(new_bp, ptr, old_size);
-            mm_free(ptr);
-            return new_bp;
-        }
+        void *new_bp = mm_malloc(new_size);
+        place(new_bp, new_size);
+        memcpy(new_bp, ptr, old_size);//변경점
+        mm_free(ptr);
+        return new_bp;
     }
 }
 

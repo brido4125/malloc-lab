@@ -83,6 +83,7 @@ static void *coalesce(void *bp);
 static void *find_fit(size_t a_size);
 static void place(void *bp, size_t a_size);
 static void remove_block(void *bp);
+void putFreeBlock(void* bp);
 
 /*
  * mm_init - initialize the malloc package.
@@ -130,44 +131,36 @@ static void *coalesce(void *bp)
     size_t prev_alloc = GET_ALLOC(HDRP(PREV_BLKP(bp)));
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
-    //앞뒤 모두 가용
-    if (!prev_alloc && !next_alloc)
-    {
-        size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
+    //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
+    if (prev_alloc && next_alloc) {
+        putFreeBlock(bp);
+        return bp;//변경지점
+    }
+        // next가 Free인 경우
+    else if (prev_alloc && !next_alloc) {
+        remove_block(NEXT_BLKP(bp));
+        size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+        PUT(HDRP(bp), PACK(size,0));
+        PUT(FTRP(bp), PACK(size,0));
+    }
+        // prev가 Free인 경우
+    else if (!prev_alloc && next_alloc) {
+        remove_block(PREV_BLKP(bp));
+        size += GET_SIZE(FTRP(PREV_BLKP(bp)));
+        PUT(FTRP(bp), PACK(size, 0));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
+        bp = PREV_BLKP(bp);
+    }
+        //양쪽 모두 Free인 경우
+    else{
         remove_block(PREV_BLKP(bp));
         remove_block(NEXT_BLKP(bp));
+        size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
-        PUT(HDRP(bp), PACK(size, 0));
-        PUT(FTRP(bp), PACK(size, 0));
     }
-        //뒤 블럭만 가용
-    else if (prev_alloc && !next_alloc)
-    {
-        size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
-        remove_block(NEXT_BLKP(bp));
-        PUT(HDRP(bp), PACK(size, 0));
-        PUT(FTRP(bp), PACK(size, 0));
-    }
-        //앞 블럭만 가용
-    else if (!prev_alloc && next_alloc)
-    {
-        size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-        bp = PREV_BLKP(bp);
-        remove_block(bp);
-        PUT(HDRP(bp), PACK(size, 0));
-        PUT(FTRP(bp), PACK(size, 0));
-    }
-
-    //앞뒤 모두 할당된 경우
-    SUCC_P(bp) = free_listp; // bp의 succesor를 가리키는 포인터를 기존 첫 블럭 포인터 대입
-    PRED_P(bp) = NULL;       // bp의 pred를 NULL로 초기화
-    PRED_P(free_listp) = bp; // 기존 첫블럭의 pred를 bp로 업데이트
-    free_listp = bp;         // free_listp를
-    /*insert block*/
-    // *(char**)(bp+4) = free_listp; // bp의 succesor를 가리키는 포인터를 기존 첫 블럭 포인터 대입
-    // *(char**)(bp) = NULL;       // bp의 pred를 NULL로 초기화
-    // *(char**)(free_listp) = bp; // 기존 첫블럭의 pred를 bp로 업데이트
-    // free_listp = bp;         // free_listp를
+    putFreeBlock(bp);
     return bp;
 }
 /*
@@ -222,23 +215,23 @@ static void *find_fit(size_t a_size)
 static void place(void *bp, size_t a_size)
 {
     size_t csize = GET_SIZE(HDRP(bp));
+    remove_block(bp);   //할당 했으므로 list에서 제거
+
     //전체 공간 중 필요공간을 뺀 나머지가 최소가용블록 이상일때
     if ((csize - a_size) >= (2 * DSIZE))
     {
         PUT(HDRP(bp), PACK(a_size, 1));
         PUT(FTRP(bp), PACK(a_size, 1));
-        remove_block(bp);   //할당 했으므로 list에서 제거
         //block 분할
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize - a_size, 0));
         PUT(FTRP(bp), PACK(csize - a_size, 0));
-        coalesce(bp);   //새 가용블록 연결
+        putFreeBlock(bp);   //새 가용블록 연결
     }
     else
     {
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
-        remove_block(bp);
     }
 }
 /*
@@ -250,6 +243,13 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
+}
+
+void putFreeBlock(void* bp){
+    SUCC_P(bp) = free_listp;
+    PRED_P(bp) = NULL;
+    PRED_P(free_listp) = bp;
+    free_listp = bp;
 }
 
 static void remove_block(void *bp)
@@ -264,7 +264,7 @@ static void remove_block(void *bp)
     else
     {
         free_listp = SUCC_P(bp);         // free_listp가 bp의 successor 를가리키도록
-        PRED_P(SUCC_P(bp)) = PRED_P(bp); // bp의 succ의 pred에 bp의 pred 대입
+        PRED_P(SUCC_P(bp)) = NULL; // bp의 succ의 pred에 bp의 pred 대입
     }
 }
 
@@ -282,38 +282,48 @@ void *mm_realloc(void *bp, size_t size)
         mm_free(bp);
         return NULL;
     }
+    size_t old_size = GET_SIZE(HDRP(bp));
+    size_t new_size = size + (2 * WSIZE); // 2 words(hd+ft)
+
+    // new_size가 old_size보다 작거나 같으면 기존 bp 그대로 사용
+    if (new_size <= old_size)
+    {
+        return bp;
+    }
+
+    int remain = old_size - new_size;
+
+
+    if (remain > 2 * DSIZE) {
+        PUT(HDRP(bp),PACK(new_size,1));
+        PUT(FTRP(bp),PACK(new_size,1));
+        PUT(HDRP(NEXT_BLKP(bp)), PACK(remain,0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(remain,0));
+        void *new_remain_block = NEXT_BLKP(bp);
+        coalesce(new_remain_block);
+        //putFreeBlock(new_remain_block);
+        return new_remain_block;
+    }
+
+
+    // new_size가 old_size보다 크면 사이즈 변경
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+    size_t current_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+
+    // next block이 가용상태이고 old, next block의 사이즈 합이 new_size보다 크면 그냥 그거 바로 합쳐서 쓰기
+    if (!next_alloc && current_size >= new_size)
+    {
+        remove_block(NEXT_BLKP(bp));
+        PUT(HDRP(bp), PACK(current_size, 1));
+        PUT(FTRP(bp), PACK(current_size, 1));
+        return bp;
+    }
     else
     {
-        size_t old_size = GET_SIZE(HDRP(bp));
-        size_t new_size = size + (2 * WSIZE); // 2 words(hd+ft)
-
-        // new_size가 old_size보다 작거나 같으면 기존 bp 그대로 사용
-        if (new_size <= old_size)
-        {
-            return bp;
-        }
-            // new_size가 old_size보다 크면 사이즈 변경
-        else
-        {
-            size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
-            size_t current_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));
-
-            // next block이 가용상태이고 old, next block의 사이즈 합이 new_size보다 크면 그냥 그거 바로 합쳐서 쓰기
-            if (!next_alloc && current_size >= new_size)
-            {
-                remove_block(NEXT_BLKP(bp));
-                PUT(HDRP(bp), PACK(current_size, 1));
-                PUT(FTRP(bp), PACK(current_size, 1));
-                return bp;
-            }
-            else
-            {
-                void *new_bp = mm_malloc(new_size);
-                place(new_bp, new_size);
-                memcpy(new_bp, bp, new_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
-                mm_free(bp);
-                return new_bp;
-            }
-        }
+        void *new_bp = mm_malloc(new_size);
+        place(new_bp, new_size);
+        memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
+        mm_free(bp);
+        return new_bp;
     }
 }
