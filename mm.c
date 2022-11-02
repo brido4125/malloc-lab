@@ -383,14 +383,13 @@ void *mm_realloc(void *ptr, size_t size)
     }
         //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
         //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
-    else if(next_alloc || available_size < new_size){
+    else{
         void *new_bp = mm_malloc(new_size);
         place(new_bp, new_size);
         memcpy(new_bp, ptr, old_size);//변경점
         mm_free(ptr);
         return new_bp;
     }
-    return NULL;
 }
 
 
