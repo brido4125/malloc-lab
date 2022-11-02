@@ -297,11 +297,10 @@ void putFreeBlock(void* bp){
 }
 
 void removeBlock(void* bp){
-    printf("in removeBlock");
-    printf("bp = %p", bp);
-    printf("free_listp = %p", free_listp);
     //free list의 첫번째 블록을 없앨 때
     if (PRED_FREEP(bp) == NULL) {
+        printf("bp = %p\n", bp);
+        printf("free_listp = %p\n", free_listp);
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
