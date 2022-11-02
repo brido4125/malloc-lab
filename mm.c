@@ -368,7 +368,7 @@ void *mm_realloc(void *bp, size_t size)
     if (!next_alloc && current_size >= new_size)
     {
         removeBlock(NEXT_BLKP(bp));
-        sleep(100);
+        sleep(1);
         if (free_listp != bp) {
             printf("False free_listp %p != %p\n", free_listp, bp);
         }
