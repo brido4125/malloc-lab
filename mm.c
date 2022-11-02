@@ -363,6 +363,9 @@ void *mm_realloc(void *ptr, size_t size)
     size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
     //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
     if (!next_alloc && available_size >= new_size) {
+        if (NEXT_BLKP(ptr) == free_listp) {
+            free_listp = ptr;
+        }
         removeBlock(NEXT_BLKP(ptr));
         PUT(HDRP(ptr), PACK(available_size, 1));
         PUT(FTRP(ptr), PACK(available_size, 1));
@@ -375,7 +378,6 @@ void *mm_realloc(void *ptr, size_t size)
         place(new_bp, new_size);
         memcpy(new_bp, ptr, old_size);//변경점
         mm_free(ptr);
-        free_listp = new_bp;
         return new_bp;
     }
 }
