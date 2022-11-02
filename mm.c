@@ -332,7 +332,7 @@ void *mm_realloc(void *ptr, size_t size)
         return NULL;
     }
     size_t old_size = GET_SIZE(HDRP(ptr));
-    size_t new_size = ALIGN(size + DSIZE);
+    size_t new_size = size + DSIZE;
 
     int remain = old_size - new_size;
     /*
