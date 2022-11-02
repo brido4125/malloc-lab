@@ -158,6 +158,7 @@ static void *extend_heap(size_t words){
  */
 void *mm_malloc(size_t size)
 {
+    printf("here is melloc\n");
     size_t asize;
     size_t extendsize;
     void *bp;
@@ -248,6 +249,7 @@ static void place(void *bp, size_t asize){
  */
 void mm_free(void *bp)
 {
+    printf("here is free\n");
     size_t size = GET_SIZE(HDRP(bp));
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
