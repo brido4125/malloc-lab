@@ -298,7 +298,7 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
-    if (PRED_FREEP(bp) == free_listp) {
+    if (bp == free_listp) {
         printf("bp = %p\n", bp);
         printf("free_listp = %p\n", free_listp);
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
@@ -363,9 +363,6 @@ void *mm_realloc(void *ptr, size_t size)
     size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
     //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
     if (!next_alloc && available_size >= new_size) {
-        if (NEXT_BLKP(ptr) == free_listp) {
-            free_listp = ptr;
-        }
         removeBlock(NEXT_BLKP(ptr));
         PUT(HDRP(ptr), PACK(available_size, 1));
         PUT(FTRP(ptr), PACK(available_size, 1));
