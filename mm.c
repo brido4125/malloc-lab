@@ -366,7 +366,12 @@ void *mm_realloc(void *ptr, size_t size)
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
         }else{
-            removeBlock(NEXT_BLKP(ptr));
+            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
+            SUCC_FREEP(PRED_FREEP(NEXT_BLKP(ptr))) = ptr;
+            SUCC_FREEP(ptr) = PRED_FREEP(NEXT_BLKP(ptr));
+            PRED_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
+            SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
+            PRED_FREEP(NEXT_BLKP(ptr)) = NULL;
         }
         PUT(HDRP(ptr), PACK(available_size, 1));
         PUT(FTRP(ptr), PACK(available_size, 1));
