@@ -297,10 +297,10 @@ void putFreeBlock(void* bp){
 }
 
 void removeBlock(void* bp){
+    int sameCount = 0;
+    int notSameCount = 0;
     //free list의 첫번째 블록을 없앨 때
-    if (PRED_FREEP(bp) == NULL) {
-        printf("free_listp = %p\n",free_listp);
-        printf("bp = %p\n",bp);
+    if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
@@ -369,16 +369,14 @@ void *mm_realloc(void *ptr, size_t size)
     }
         //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
         //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
-    else{
+    else if(next_alloc || available_size < new_size){
         void *new_bp = mm_malloc(new_size);
         place(new_bp, new_size);
         memcpy(new_bp, ptr, old_size);//변경점
         mm_free(ptr);
-        if (ptr == free_listp) {
-            free_listp = (char*)new_bp;
-        }
         return new_bp;
     }
+    return NULL;
 }
 
 
