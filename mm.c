@@ -326,97 +326,58 @@ void removeBlock(void* bp){
  * 만일 이미 할당된 메모리 영역에서 크기를 조정할 수 있다면(옆 블럭이 가용블럭 or epilogue) 반환되는 주소는 첫 번째 인자로 전달된 주소와 같다.
  * 그러나 불가능하다면 기존의 메모리를 해제하고 새로운 영역에 다시 할당한 후, 새로 할당된 메모리의 주소를 반환한다.
  */
-void *mm_realloc(void *ptr, size_t size)
+
+void *mm_realloc(void *bp, size_t size)
 {
-    printf("here is realloc\n");
-    printf("ptr %p\n",ptr);
-    printf("size %ld\n",size);
-
-
-
-    printf("====================");
-
-
-
-
-    printf("====================");
-//    if (ptr == NULL) {
-//        printf("====================");
-//        printf("here is ptr is NULL\n");
-//    }
-//    if (size < 0) {
-//        printf("====================");
-//        return NULL;
-//    }
-//    else if (size == 0) {
-//        printf("====================");
-//        mm_free(ptr);
-//        return NULL;
-//    }
-    printf("====================");
-    size_t old_size = GET_SIZE(HDRP(ptr));
-    size_t new_size = size + DSIZE;
-    printf("====================");
-    /*
-     * old_size가 new_size보다 크거나 같을 경우
-     * 해당 블럭에서 realloc 가능하니 바로 리턴
-     * */
-    if (new_size <= old_size) {
-        return ptr;
+    if (size < 0)
+        return NULL;
+    else if (size == 0)
+    {
+        mm_free(bp);
+        return NULL;
     }
-//    int remain = old_size - new_size;
-    /*
-    * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
-    * */
-//    if (remain > 2 * DSIZE) {
-//        PUT(HDRP(ptr),PACK(new_size,1));
-//        PUT(FTRP(ptr),PACK(new_size,1));
-//        PUT(HDRP(NEXT_BLKP(ptr)), PACK(remain,0));
-//        PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
-//        void *new_remain_block = NEXT_BLKP(ptr);
-//        putFreeBlock(new_remain_block);
-//        return new_remain_block;
-//    }
-        /*
-         * remain이 음수인 경우, 즉 현재 블럭의 공간으로 realloc이 요구하는 사이즈를 감당하지 못하는 경우
-         * 새로운 malloc을 통해 주소를 새롭게 할당 받아야 한다.
-         * */
-    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));//다음 블럭의 가용 여부 확인
-    size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
-    //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
-    if (!next_alloc && available_size >= new_size) {
-        if (NEXT_BLKP(ptr) == free_listp) {
-            printf("free_listp = %p \n", free_listp);
-            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(ptr));
-            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
-            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
-            SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
-            free_listp = ptr;
-            PRED_FREEP(free_listp) = NULL;
-            SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
-        }else{
-            printf("free_listp = %p \n", free_listp);
-            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(ptr));
-            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
-            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
-            SUCC_FREEP(PRED_FREEP(NEXT_BLKP(ptr))) = ptr;
-            SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
-            PRED_FREEP(ptr) = PRED_FREEP(NEXT_BLKP(ptr));
-            SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
-            PRED_FREEP(NEXT_BLKP(ptr)) = NULL;
-        }
-        PUT(HDRP(ptr), PACK(available_size, 1));
-        PUT(FTRP(ptr), PACK(available_size, 1));
-        return ptr;
+    size_t old_size = GET_SIZE(HDRP(bp));
+    size_t new_size = size + (2 * WSIZE); // 2 words(hd+ft)
+
+    // new_size가 old_size보다 작거나 같으면 기존 bp 그대로 사용
+    if (new_size <= old_size)
+    {
+        return bp;
     }
-        //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
-        //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
-    else{
+
+    int remain = old_size - new_size;
+
+
+    if (remain > 2 * DSIZE) {
+        PUT(HDRP(bp),PACK(new_size,1));
+        PUT(FTRP(bp),PACK(new_size,1));
+        PUT(HDRP(NEXT_BLKP(bp)), PACK(remain,0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(remain,0));
+        void *new_remain_block = NEXT_BLKP(bp);
+        coalesce(new_remain_block);
+        //putFreeBlock(new_remain_block);
+        return new_remain_block;
+    }
+
+
+    // new_size가 old_size보다 크면 사이즈 변경
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+    size_t current_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+
+    // next block이 가용상태이고 old, next block의 사이즈 합이 new_size보다 크면 그냥 그거 바로 합쳐서 쓰기
+    if (!next_alloc && current_size >= new_size)
+    {
+        removeBlock(NEXT_BLKP(bp));
+        PUT(HDRP(bp), PACK(current_size, 1));
+        PUT(FTRP(bp), PACK(current_size, 1));
+        return bp;
+    }
+    else
+    {
         void *new_bp = mm_malloc(new_size);
-        printf("====================");
         place(new_bp, new_size);
-        memcpy(new_bp, ptr, old_size);//변경점
-        mm_free(ptr);
+        memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
+        mm_free(bp);
         return new_bp;
     }
 }
