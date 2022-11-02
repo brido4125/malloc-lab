@@ -102,7 +102,7 @@ static void place(void *bp, size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
-static char *heap_listp;
+char *heap_listp;
 char *free_listp;
 /*
  * mm_init - initialize the malloc package.
