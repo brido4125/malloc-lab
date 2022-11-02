@@ -331,7 +331,7 @@ void *mm_realloc(void *ptr, size_t size)
         return new_remain_block;
     }
     else if (remain >= 0){
-        return ptr;
+        return NULL;
     }
         /*
          * remain이 음수인 경우, 즉 현재 블럭의 공간으로 realloc이 요구하는 사이즈를 감당하지 못하는 경우
