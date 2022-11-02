@@ -307,7 +307,7 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
-    if (bp == free_listp) {
+    if (PRED_FREEP(bp) == NULL) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
