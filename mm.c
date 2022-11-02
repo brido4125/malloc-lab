@@ -332,12 +332,15 @@ void *mm_realloc(void *ptr, size_t size)
     printf("ptr %p\n",ptr);
     printf("size %ld\n",size);
     if (ptr == NULL) {
-        printf("here is realloc ptr is NULL\n");
+        printf("====================");
+        printf("here is ptr is NULL\n");
     }
     if (size < 0) {
+        printf("====================");
         return NULL;
     }
     else if (size == 0) {
+        printf("====================");
         mm_free(ptr);
         return NULL;
     }
