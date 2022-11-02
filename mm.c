@@ -231,7 +231,9 @@ static void place(void *bp, size_t asize){
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(current_size - asize,0));
         PUT(FTRP(bp), PACK(current_size - asize,0));
+        printf("bp = %p\n", bp);
         putFreeBlock(bp);
+        printf("free_listp = %p\n", free_listp);
     }
     else{
         PUT(HDRP(bp), PACK(current_size, 1));
@@ -258,7 +260,9 @@ static void *coalesce(void *bp){
 
     //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
     if (prev_alloc && next_alloc) {
+        printf("bp = %p\n", bp);
         putFreeBlock(bp);
+        printf("free_listp = %p\n", free_listp);
         return bp;//변경지점
     }
         // next가 Free인 경우
@@ -285,7 +289,9 @@ static void *coalesce(void *bp){
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
     }
+    printf("bp = %p\n", bp);
     putFreeBlock(bp);
+    printf("free_listp = %p\n", free_listp);
     return bp;
 }
 
