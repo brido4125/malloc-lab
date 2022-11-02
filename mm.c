@@ -353,7 +353,7 @@ void *mm_realloc(void *ptr, size_t size)
         //putFreeBlock(new_remain_block);
         return new_remain_block;
     }
-    if (remain >= 0){
+    else if (remain >= 0){
         return ptr;
     }
         /*
