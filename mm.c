@@ -327,17 +327,17 @@ void *mm_realloc(void *ptr, size_t size)
     /*
     * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
     * */
-    if (remain > 2 * DSIZE) {
-        PUT(HDRP(ptr),PACK(new_size,1));
-        PUT(FTRP(ptr),PACK(new_size,1));
-        PUT(HDRP(NEXT_BLKP(ptr)), PACK(remain,0));
-        PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
-        void *new_remain_block = NEXT_BLKP(ptr);
-        coalesce(new_remain_block);
-        //putFreeBlock(new_remain_block);
-        return new_remain_block;
-    }
-    else if (remain >= 0){
+//    if (remain > 2 * DSIZE) {
+//        PUT(HDRP(ptr),PACK(new_size,1));
+//        PUT(FTRP(ptr),PACK(new_size,1));
+//        PUT(HDRP(NEXT_BLKP(ptr)), PACK(remain,0));
+//        PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
+//        void *new_remain_block = NEXT_BLKP(ptr);
+//        coalesce(new_remain_block);
+//        //putFreeBlock(new_remain_block);
+//        return new_remain_block;
+//    }
+    if (remain >= 0){
         return ptr;
     }
         /*
