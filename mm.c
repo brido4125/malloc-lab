@@ -362,16 +362,18 @@ void *mm_realloc(void *ptr, size_t size)
     if (!next_alloc && available_size >= new_size) {
         if (NEXT_BLKP(ptr) == free_listp) {
             printf("free_listp = %p \n", free_listp);
-            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
-            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(ptr));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
+            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
             SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
         }else{
             printf("free_listp = %p \n", free_listp);
-            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
-            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(ptr));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
+            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(PRED_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
             PRED_FREEP(ptr) = PRED_FREEP(NEXT_BLKP(ptr));
