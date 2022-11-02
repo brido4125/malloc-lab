@@ -160,7 +160,7 @@ void *mm_malloc(size_t size)
     else{
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
-    if ((bp = best_fit(asize)) != NULL) {
+    if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
