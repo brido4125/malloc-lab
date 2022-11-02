@@ -333,7 +333,7 @@ void *mm_realloc(void *bp, size_t size)
             // next block이 free old, next block의 사이즈 합이 a_size보다 크면 병합
             if (!next_alloc && current_size >= a_size)
             {
-                remove_block(NEXT_BLKP(bp));
+                removeBlock(NEXT_BLKP(bp));
                 PUT(HDRP(bp), PACK(current_size, 1));
                 PUT(FTRP(bp), PACK(current_size, 1));
                 return bp;
