@@ -307,7 +307,7 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
-    if (PRED_FREEP(bp) == NULL) {
+    if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
@@ -345,19 +345,6 @@ void *mm_realloc(void *bp, size_t size)
         return bp;
     }
 
-    int remain = old_size - new_size;
-
-
-    if (remain > 2 * DSIZE) {
-        PUT(HDRP(bp),PACK(new_size,1));
-        PUT(FTRP(bp),PACK(new_size,1));
-        PUT(HDRP(NEXT_BLKP(bp)), PACK(remain,0));
-        PUT(FTRP(NEXT_BLKP(bp)), PACK(remain,0));
-        void *new_remain_block = NEXT_BLKP(bp);
-        coalesce(new_remain_block);
-        //putFreeBlock(new_remain_block);
-        return new_remain_block;
-    }
 
 
     // new_size가 old_size보다 크면 사이즈 변경
