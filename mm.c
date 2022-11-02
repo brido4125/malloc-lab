@@ -343,7 +343,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     size_t old_size = GET_SIZE(HDRP(ptr));
     size_t new_size = size + DSIZE;
-
+    printf("====================");
     /*
      * old_size가 new_size보다 크거나 같을 경우
      * 해당 블럭에서 realloc 가능하니 바로 리턴
