@@ -369,8 +369,8 @@ void *mm_realloc(void *bp, size_t size)
     {
         removeBlock(NEXT_BLKP(bp));
         sleep(1);
-        if (free_listp != bp) {
-            printf("False free_listp %p != %p\n", free_listp, bp);
+        if (free_listp != NEXT_BLKP(bp)) {
+            printf("False free_listp %p != %p\n", free_listp, NEXT_BLKP(bp));
         }
         PUT(HDRP(bp), PACK(current_size, 1));
         PUT(FTRP(bp), PACK(current_size, 1));
