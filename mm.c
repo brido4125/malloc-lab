@@ -299,8 +299,8 @@ void putFreeBlock(void* bp){
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
     if (PRED_FREEP(bp) == NULL) {
-        printf("free_listp = %p",free_listp);
-        printf("bp = %p",bp);
+        printf("free_listp = %p\n",free_listp);
+        printf("bp = %p\n",bp);
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
