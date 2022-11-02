@@ -331,7 +331,6 @@ void *mm_realloc(void *ptr, size_t size)
     printf("here is realloc\n");
     printf("ptr %p\n",ptr);
     printf("====================");
-    printf("size %ld\n",size);
     printf("====================");
 //    if (ptr == NULL) {
 //        printf("====================");
