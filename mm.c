@@ -329,6 +329,7 @@ void removeBlock(void* bp){
 
 void *mm_realloc(void *bp, size_t size)
 {
+    printf("here is realloc\n");
     if (size < 0)
         return NULL;
     else if (size == 0)
@@ -344,9 +345,6 @@ void *mm_realloc(void *bp, size_t size)
     {
         return bp;
     }
-
-
-
     // new_size가 old_size보다 크면 사이즈 변경
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t current_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));
