@@ -369,7 +369,6 @@ void *mm_realloc(void *ptr, size_t size)
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
         }
-        PRED_FREEP(SUCC_FREEP(ptr)) = NULL;
         return ptr;
     }
         //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
