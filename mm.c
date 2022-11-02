@@ -308,6 +308,13 @@ void removeBlock(void* bp){
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+
+    if (size < 0) {
+        return NULL;
+    } else if (size == 0) {
+        mm_free(ptr);
+        return NULL;
+    }
     size_t old_size = GET_SIZE(HDRP(ptr));
     size_t new_size = ALIGN(size + DSIZE);
 
@@ -331,7 +338,7 @@ void *mm_realloc(void *ptr, size_t size)
         return new_remain_block;
     }
     else if (remain >= 0){
-        return NULL;
+        return ptr;
     }
         /*
          * remain이 음수인 경우, 즉 현재 블럭의 공간으로 realloc이 요구하는 사이즈를 감당하지 못하는 경우
