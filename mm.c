@@ -341,6 +341,7 @@ void *mm_realloc(void *ptr, size_t size)
         mm_free(ptr);
         return NULL;
     }
+    printf("====================");
     size_t old_size = GET_SIZE(HDRP(ptr));
     size_t new_size = size + DSIZE;
     printf("====================");
