@@ -316,13 +316,11 @@ void *mm_realloc(void *ptr, size_t size)
      * old_size가 new_size보다 크거나 같을 경우
      * 해당 블럭에서 realloc 가능하니 바로 리턴
      * */
-    if (remain >= 0){
-        return ptr;
-    }
+
     /*
     * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
     * */
-    else if (remain > 2 * DSIZE) {
+    if (remain > 2 * DSIZE) {
         PUT(HDRP(ptr),PACK(new_size,1));
         PUT(FTRP(ptr),PACK(new_size,1));
         PUT(HDRP(NEXT_BLKP(ptr)), PACK(remain,0));
@@ -331,6 +329,9 @@ void *mm_realloc(void *ptr, size_t size)
         coalesce(new_remain_block);
         putFreeBlock(new_remain_block);
         return new_remain_block;
+    }
+    else if (remain >= 0){
+        return ptr;
     }
         /*
          * remain이 음수인 경우, 즉 현재 블럭의 공간으로 realloc이 요구하는 사이즈를 감당하지 못하는 경우
