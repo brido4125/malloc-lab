@@ -336,7 +336,7 @@ void *mm_realloc(void *ptr, size_t size)
          * */
     else{
         size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));//다음 블럭의 가용 여부 확인
-        size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));//현재 블럭 + 다음 블럭의 사이즈
+        size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
         //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
         if (!next_alloc && available_size >= new_size) {
             PUT(HDRP(ptr), PACK(available_size, 1));
