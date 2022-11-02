@@ -161,6 +161,8 @@ void mm_free(void *ptr)
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
+ * 만일 이미 할당된 메모리 영역에서 크기를 조정할 수 있다면(옆 블럭이 가용블럭 or epilogue) 반환되는 주소는 첫 번째 인자로 전달된 주소와 같다.
+ * 그러나 불가능하다면 기존의 메모리를 해제하고 새로운 영역에 다시 할당한 후, 새로 할당된 메모리의 주소를 반환한다.
  */
 void *mm_realloc(void *ptr, size_t size)
 {
