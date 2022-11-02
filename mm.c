@@ -365,6 +365,7 @@ void *mm_realloc(void *ptr, size_t size)
         PUT(HDRP(ptr), PACK(available_size, 1));
         PUT(FTRP(ptr), PACK(available_size, 1));
         removeBlock(NEXT_BLKP(ptr));
+        free_listp = ptr;
         return ptr;
     }
         //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
