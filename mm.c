@@ -360,13 +360,13 @@ void *mm_realloc(void *ptr, size_t size)
     size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
     //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
     if (!next_alloc && available_size >= new_size) {
-        if (NEXT_BLKP(ptr) != free_listp) {
-            removeBlock(NEXT_BLKP(ptr));
-        }else{
+        if (NEXT_BLKP(ptr) == free_listp) {
             printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
             PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
+        }else{
+            removeBlock(NEXT_BLKP(ptr));
         }
         PUT(HDRP(ptr), PACK(available_size, 1));
         PUT(FTRP(ptr), PACK(available_size, 1));
