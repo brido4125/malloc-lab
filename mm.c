@@ -349,7 +349,7 @@ void *mm_realloc(void *ptr, size_t size)
         PUT(HDRP(NEXT_BLKP(ptr)), PACK(remain,0));
         PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
         void *new_remain_block = NEXT_BLKP(ptr);
-        putFreeBlock(new_remain_block);
+        coalesce(new_remain_block);
         return new_remain_block;
     }
         /*
