@@ -330,7 +330,14 @@ void *mm_realloc(void *ptr, size_t size)
 {
     printf("here is realloc\n");
     printf("ptr %p\n",ptr);
+
+
+
     printf("====================");
+
+
+
+
     printf("====================");
 //    if (ptr == NULL) {
 //        printf("====================");
@@ -405,6 +412,7 @@ void *mm_realloc(void *ptr, size_t size)
         //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
     else{
         void *new_bp = mm_malloc(new_size);
+        printf("====================");
         place(new_bp, new_size);
         memcpy(new_bp, ptr, old_size);//변경점
         mm_free(ptr);
