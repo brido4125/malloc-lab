@@ -160,7 +160,7 @@ void *mm_malloc(size_t size)
 {
     size_t asize;
     size_t extendsize;
-    char *bp;
+    void *bp;
 
     if (size == 0) {
         return NULL;
