@@ -319,9 +319,9 @@ void *mm_realloc(void *ptr, size_t size)
     if (remain >= 0){
         return ptr;
     }
-        /*
-         * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
-         * */
+    /*
+    * remain이 16 이상인 경우,남은 공간을 때어서 가용 공간으로 바꿔줘야한다.
+    * */
     else if (remain > 2 * DSIZE) {
         PUT(HDRP(ptr),PACK(new_size,1));
         PUT(FTRP(ptr),PACK(new_size,1));
@@ -329,6 +329,7 @@ void *mm_realloc(void *ptr, size_t size)
         PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
         void *new_remain_block = NEXT_BLKP(ptr);
         coalesce(new_remain_block);
+        putFreeBlock(new_remain_block);
         return new_remain_block;
     }
         /*
@@ -342,6 +343,7 @@ void *mm_realloc(void *ptr, size_t size)
         if (!next_alloc && available_size >= new_size) {
             PUT(HDRP(ptr), PACK(available_size, 1));
             PUT(FTRP(ptr), PACK(available_size, 1));
+            removeBlock(NEXT_BLKP(ptr));
             return ptr;
         }
             //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
