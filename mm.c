@@ -360,17 +360,18 @@ void *mm_realloc(void *ptr, size_t size)
     size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(ptr)));//현재 블럭 + 다음 블럭의 사이즈
     //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
     if (!next_alloc && available_size >= new_size) {
-        printf("NEXT_BLKP(ptr) = %p \n", NEXT_BLKP(ptr));
         if (NEXT_BLKP(ptr) == free_listp) {
-            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
-            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
+            printf("free_listp = %p \n", free_listp);
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
             SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
         }else{
-            printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
-            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
+            printf("free_listp = %p \n", free_listp);
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));            PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(PRED_FREEP(NEXT_BLKP(ptr))) = ptr;
             SUCC_FREEP(ptr) = SUCC_FREEP(NEXT_BLKP(ptr));
             PRED_FREEP(ptr) = PRED_FREEP(NEXT_BLKP(ptr));

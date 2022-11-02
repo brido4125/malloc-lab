@@ -311,9 +311,28 @@ void *mm_realloc(void *bp, size_t size)
     size_t current_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));
 
     // next block이 가용상태이고 old, next block의 사이즈 합이 new_size보다 크면 그냥 그거 바로 합쳐서 쓰기
-    if (!next_alloc && current_size >= new_size)
-    {
-        remove_block(NEXT_BLKP(bp));
+    if (!next_alloc && current_size >= new_size) {
+        printf("NEXT_BLKP(ptr) = %p \n", NEXT_BLKP(bp));
+        if (NEXT_BLKP(bp) == free_listp) {
+            printf("free_listp = %p \n", free_listp);
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));
+            PRED_P(SUCC_P(NEXT_BLKP(bp))) = bp;
+            SUCC_P(bp) = SUCC_P(NEXT_BLKP(bp));
+            free_listp = bp;
+            PRED_P(free_listp) = NULL;
+            SUCC_P(NEXT_BLKP(bp)) = NULL;
+        }else{
+            printf("free_listp = %p \n", free_listp);
+            printf("NEXT_BLKP(bp) = %p \n", NEXT_BLKP(bp));
+            printf("PRIV(NEXT pointer) = %p \n", PRED_P(NEXT_BLKP(bp)));
+            PRED_P(SUCC_P(NEXT_BLKP(bp))) = bp;
+            SUCC_P(PRED_P(NEXT_BLKP(bp))) = bp;
+            SUCC_P(bp) = SUCC_P(NEXT_BLKP(bp));
+            PRED_P(bp) = PRED_P(NEXT_BLKP(bp));
+            SUCC_P(NEXT_BLKP(bp)) = NULL;
+            PRED_P(NEXT_BLKP(bp)) = NULL;
+        }
         PUT(HDRP(bp), PACK(current_size, 1));
         PUT(FTRP(bp), PACK(current_size, 1));
         return bp;
