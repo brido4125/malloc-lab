@@ -308,7 +308,7 @@ void removeBlock(void* bp){
 void *mm_realloc(void *ptr, size_t size)
 {
     size_t old_size = GET_SIZE(HDRP(ptr));
-    size_t new_size = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
+    size_t new_size = ALIGN(size + DSIZE);
 
     int remain = old_size - new_size;
     /*
@@ -346,7 +346,7 @@ void *mm_realloc(void *ptr, size_t size)
         //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
         //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
         else{
-            void *new_bp = malloc(new_size);
+            void *new_bp = mm_malloc(new_size);
             place(new_bp, new_size);
             memcpy(new_bp, ptr, old_size);
             mm_free(ptr);
