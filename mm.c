@@ -365,6 +365,7 @@ void *mm_realloc(void *ptr, size_t size)
             PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
             free_listp = ptr;
             PRED_FREEP(free_listp) = NULL;
+            SUCC_FREEP(NEXT_BLKP(ptr)) = NULL;
         }else{
             printf("PRIV(NEXT pointer) = %p \n", PRED_FREEP(NEXT_BLKP(ptr)));
             PRED_FREEP(SUCC_FREEP(NEXT_BLKP(ptr))) = ptr;
