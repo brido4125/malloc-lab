@@ -335,11 +335,23 @@ void *mm_realloc(void *ptr, size_t size)
          * 새로운 malloc을 통해 주소를 새롭게 할당 받아야 한다.
          * */
     else{
-        void *new_bp = mm_malloc(new_size);
-        place(new_bp, new_size);
-        memcpy(new_bp, ptr, old_size);
-        mm_free(ptr);
-        return new_bp;
+        size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));//다음 블럭의 가용 여부 확인
+        size_t available_size = old_size + GET_SIZE(HDRP(NEXT_BLKP(bp)));//현재 블럭 + 다음 블럭의 사이즈
+        //다음 블럭이 가용 공간이고 해당 블럭을 합친 사이즈로 new_size를 감당할 수 있는 경우
+        if (!next_alloc && available_size >= new_size) {
+            PUT(HDRP(ptr), PACK(available_size, 1));
+            PUT(FTRP(ptr), PACK(available_size, 1));
+            return ptr;
+        }
+        //다음 블럭이 가용 공간이 아니거나,합친 블럭 사이즈가 new_size보다 작은 경우
+        //malloc을 통해 새롭게 할당해야한다. => realloc을 통해 새로운 주소값이 반환 된다.
+        else{
+            void *new_bp = malloc(new_size);
+            place(new_bp, new_size);
+            memcpy(new_bp, ptr, old_size);
+            mm_free(ptr);
+            return new_bp;
+        }
     }
 }
 
