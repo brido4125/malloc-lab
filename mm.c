@@ -298,7 +298,9 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
-    if (bp == free_listp) {
+    if (PRED_FREEP(bp) == NULL) {
+        printf("free_listp = %p",free_listp);
+        printf("bp = %p",bp);
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
@@ -350,7 +352,6 @@ void *mm_realloc(void *ptr, size_t size)
         PUT(FTRP(NEXT_BLKP(ptr)), PACK(remain,0));
         void *new_remain_block = NEXT_BLKP(ptr);
         coalesce(new_remain_block);
-        putFreeBlock(new_remain_block);
         return new_remain_block;
     }
         /*
