@@ -333,19 +333,19 @@ void *mm_realloc(void *ptr, size_t size)
     printf("====================");
     printf("size %ld\n",size);
     printf("====================");
-    if (ptr == NULL) {
-        printf("====================");
-        printf("here is ptr is NULL\n");
-    }
-    if (size < 0) {
-        printf("====================");
-        return NULL;
-    }
-    else if (size == 0) {
-        printf("====================");
-        mm_free(ptr);
-        return NULL;
-    }
+//    if (ptr == NULL) {
+//        printf("====================");
+//        printf("here is ptr is NULL\n");
+//    }
+//    if (size < 0) {
+//        printf("====================");
+//        return NULL;
+//    }
+//    else if (size == 0) {
+//        printf("====================");
+//        mm_free(ptr);
+//        return NULL;
+//    }
     printf("====================");
     size_t old_size = GET_SIZE(HDRP(ptr));
     size_t new_size = size + DSIZE;
