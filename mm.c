@@ -126,7 +126,7 @@ int mm_init(void)
     heap_listp += (2 * WSIZE);
     free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
-    if (extend_heap(CHUNKSIZE / WSIZE) == NULL) {
+    if (extend_heap(CHUNKSIZE / DSIZE) == NULL) {
         return -1;
     }
     return 0;
