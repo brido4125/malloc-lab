@@ -231,7 +231,9 @@ static void place(void *bp, size_t asize){
     //요청한 블록을 가용 블록의 시작 부분에 배치
     size_t current_size = GET_SIZE(HDRP(bp));
     printf("In place bp = %p\n", bp);
-    removeBlock(bp);
+    if (bp == free_listp) {
+        removeBlock(bp);
+    }
     if ((current_size - asize) > 2 * DSIZE) {
         //asize만큼으로 bp의 사이즈를 변경해주었기에 NEXT_BLKP 시 처음 할당 받은 bp 블럭 내의 포인터로 이동한다.
         PUT(HDRP(bp), PACK(asize, 1));
