@@ -31,23 +31,13 @@ team_t team = {
         /* First member's full name */
         "Brido",
         /* First member's email address */
-        "brido@cs.cmu.edu",
+        "hcs4125@gmail.com",
         /* Second member's full name (leave blank if none) */
         "",
         /* Second member's email address (leave blank if none) */
         ""
 };
 
-/*
- * Debugging macro.
- * */
-#ifdef DEBUG
-# define dbg_printf(...) printf(__VA_ARGS__)
-# define dbg_printblock(a) printblock(a)
-#else
-# define dbg_printf(...)
-# define dbg_printblock(a)
-#endif
 
 
 /* single word (4) or double word (8) alignment */
@@ -62,7 +52,7 @@ team_t team = {
 /*MACRO 함수 및 할당기에서 사용할 상수 정의*/
 #define WSIZE 4 // Word 사이즈를 4 byte로 할당
 #define DSIZE 8 // Double Word 사이즈는 8 byte로 할당
-#define CHUNKSIZE (1<<12) // 할당할 Heap의 사이즈 대략 4096 byte(4KB) 정도, 추후 4096으로 변경하고 실험 필요
+#define CHUNKSIZE (1<<12) // 할당할 Heap의 사이즈
 #define MINIMUM 16 //Explicit 방식의 블럭에서 필요한 최소 노드의 크기
 
 
@@ -126,6 +116,9 @@ int mm_init(void)
     heap_listp += (2 * WSIZE);
     free_listp = heap_listp;// 사용할 이중 연결 리스트의 시작점 -> free_listp
 
+    /*
+     * extend_heap을 통해 가용 블럭 크기를 늘려줌
+     * */
     if (extend_heap(CHUNKSIZE / DSIZE) == NULL) {
         return -1;
     }
@@ -134,6 +127,8 @@ int mm_init(void)
 
 /*
  * Word 단위의 메모리 크기를 인자로 받아 현재 힙의 사이즈를 늘려주는 메서드
+ * 기존의 에필로그 block이 새로운 extned_heap을 통해 생기는 가용 블럭의 헤더가 되고
+ * 새로운 Epilogue 블럭을 PUT 한다.
  * */
 static void *extend_heap(size_t words){
     char *bp;//Block Pointer
@@ -164,13 +159,16 @@ void *mm_malloc(size_t size)
     size_t extendsize;
     void *bp;
 
+    /*
+     * ALIGN 과정
+     * */
     if (size == 0) {
         return NULL;
     }
     if (size <= DSIZE) {
         asize = 2 * DSIZE;//8byte는 헤더 + 푸터만의 최소 블록 크기이므로, 그 다음 8의 배수인 16바이트로 설정
     }
-        //size가 8보다 크다면
+    //size가 8보다 크다면
     else{
         asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
     }
@@ -213,9 +211,6 @@ static void *best_fit(size_t asize){
                 return_bp = bp;
             }
         }
-    }
-    if (return_bp == NULL) {
-        return NULL;
     }
     return return_bp;
 }
@@ -261,16 +256,16 @@ static void *coalesce(void *bp){
     //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
     if (prev_alloc && next_alloc) {
         putFreeBlock(bp);
-        return bp;//변경지점
+        return bp;
     }
-        // next가 Free인 경우
+    //next가 Free인 경우
     else if (prev_alloc && !next_alloc) {
         removeBlock(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size,0));
         PUT(FTRP(bp), PACK(size,0));
     }
-        // prev가 Free인 경우
+    // prev가 Free인 경우
     else if (!prev_alloc && next_alloc) {
         removeBlock(PREV_BLKP(bp));
         size += GET_SIZE(FTRP(PREV_BLKP(bp)));
@@ -278,7 +273,7 @@ static void *coalesce(void *bp){
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
         bp = PREV_BLKP(bp);
     }
-        //양쪽 모두 Free인 경우
+    //양쪽 모두 Free인 경우
     else{
         removeBlock(PREV_BLKP(bp));
         removeBlock(NEXT_BLKP(bp));
@@ -304,10 +299,10 @@ void removeBlock(void* bp){
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
     }
-        /*
-         * 현재 할당 받는 블럭이 리스트의 첫번째 노드가 아닌 경우
-         * 할당 될 노드 기준 앞 뒤 노드를 서로 이중 연결 해줘야한다.
-         * */
+    /*
+    * 현재 할당 받는 블럭이 리스트의 첫번째 노드가 아닌 경우
+    * 할당 될 노드 기준 앞 뒤 노드를 서로 이중 연결 해줘야한다.
+    * */
     else{
         SUCC_FREEP(PRED_FREEP(bp)) = SUCC_FREEP(bp);
         PRED_FREEP(SUCC_FREEP(bp)) = PRED_FREEP(bp);
@@ -316,13 +311,11 @@ void removeBlock(void* bp){
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
- * 만일 이미 할당된 메모리 영역에서 크기를 조정할 수 있다면(옆 블럭이 가용블럭 or epilogue) 반환되는 주소는 첫 번째 인자로 전달된 주소와 같다.
- * 그러나 불가능하다면 기존의 메모리를 해제하고 새로운 영역에 다시 할당한 후, 새로 할당된 메모리의 주소를 반환한다.
+ * 만일 이미 할당된 메모리 영역에서 크기를 조정할 수 있다면(옆 블럭이 가용블럭 or epilogue) 반환되는 주소는 첫 번째 인자로 전달된 주소와 같다.(현재 아파트의 발코니를 확장하는 경우)
+ * 그러나 불가능하다면 기존의 메모리를 해제하고 새로운 영역에 다시 할당한 후, 새로 할당된 메모리의 주소를 반환한다.(새로운 아파트로 이사가는 경우)
  */
-
 void *mm_realloc(void *bp, size_t size)
 {
-    //printf("here is realloc - start\n");
     if (size < 0)
         return NULL;
     else if (size == 0)
@@ -348,32 +341,22 @@ void *mm_realloc(void *bp, size_t size)
         removeBlock(NEXT_BLKP(bp));
         PUT(HDRP(bp), PACK(current_size, 1));
         PUT(FTRP(bp), PACK(current_size, 1));
-        //printf("here is realloc - end\n");
         return bp;
     }
+    /*
+     * realloc할 주소에서 가용 공간이 없기에 새로운 주소로 이사가야 하는 경우
+     * */
     else
     {
-        //printf("here is realloc - else case start malloc\n");
         void *new_bp = mm_malloc(new_size);
-        //printf("here is realloc - else case end malloc\n");
-        //printf("new_bp = %p\n", new_bp);
+        /*
+         * malloc을 통해 받아온 새로운 할당 공간은 place를 하기 전에는 가용 공간 => 그래서 putFreeBlock을 해준뒤, place를 호출해야한다.
+         * */
         putFreeBlock(new_bp);
         place(new_bp, new_size);
         memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
         mm_free(bp);
-        //printf("here is realloc - end\n");
         return new_bp;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 
