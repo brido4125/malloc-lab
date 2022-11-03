@@ -230,6 +230,7 @@ static void place(void *bp, size_t asize){
     //bp가 find_fit을 통해 얻은 블럭 주소 또는 extend_heap을 통해 얻은 블럭 주소
     //요청한 블록을 가용 블록의 시작 부분에 배치
     size_t current_size = GET_SIZE(HDRP(bp));
+    printf("In place bp = %p\n", bp);
     removeBlock(bp);
     if ((current_size - asize) > 2 * DSIZE) {
         //asize만큼으로 bp의 사이즈를 변경해주었기에 NEXT_BLKP 시 처음 할당 받은 bp 블럭 내의 포인터로 이동한다.
@@ -316,6 +317,7 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
+    printf("In removeBlock bp = %p\n", bp);
     if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
@@ -373,8 +375,10 @@ void *mm_realloc(void *bp, size_t size)
     }
     else
     {
-        printf("here is realloc - else case");
+        printf("here is realloc - else case start malloc\n");
         void *new_bp = mm_malloc(new_size);
+        printf("here is realloc - else case end malloc\n");
+        printf("new_bp = %p\n", new_bp);
         place(new_bp, new_size);
         memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
         mm_free(bp);
