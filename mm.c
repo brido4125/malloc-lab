@@ -160,13 +160,11 @@ static void *extend_heap(size_t words){
  */
 void *mm_malloc(size_t size)
 {
-    printf("here is melloc start\n");
     size_t asize;
     size_t extendsize;
     void *bp;
 
     if (size == 0) {
-        printf("here is melloc end\n");
         return NULL;
     }
     if (size <= DSIZE) {
@@ -178,17 +176,14 @@ void *mm_malloc(size_t size)
     }
     if ((bp = first_fit(asize)) != NULL) {
         place(bp, asize);
-        printf("here is melloc end\n");
         return bp;
     }
     //fit 전략이 성공하지 않은 경우, asize 또는 CHUNKSIZE만큼 가용 리스트의 범위를 넓혀준다.
     extendsize = MAX(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize / WSIZE)) == NULL) {
-        printf("here is melloc end\n");
         return NULL;
     }
     place(bp, asize);
-    printf("here is melloc end\n");
     return bp;
 }
 
@@ -230,10 +225,6 @@ static void place(void *bp, size_t asize){
     //bp가 find_fit을 통해 얻은 블럭 주소 또는 extend_heap을 통해 얻은 블럭 주소
     //요청한 블록을 가용 블록의 시작 부분에 배치
     size_t current_size = GET_SIZE(HDRP(bp));
-    printf("In place bp = %p\n", bp);
-//    if (bp == free_listp) {
-//
-//    }
     removeBlock(bp);
     if ((current_size - asize) > 2 * DSIZE) {
         //asize만큼으로 bp의 사이즈를 변경해주었기에 NEXT_BLKP 시 처음 할당 받은 bp 블럭 내의 포인터로 이동한다.
@@ -243,9 +234,6 @@ static void place(void *bp, size_t asize){
         PUT(HDRP(bp), PACK(current_size - asize,0));
         PUT(FTRP(bp), PACK(current_size - asize,0));
         putFreeBlock(bp);
-        if (free_listp != bp) {
-            printf("False free_listp %p != %p\n", free_listp, bp);
-        }
     }
     else{
         PUT(HDRP(bp), PACK(current_size, 1));
@@ -259,12 +247,10 @@ static void place(void *bp, size_t asize){
  */
 void mm_free(void *bp)
 {
-    printf("here is free start\n");
     size_t size = GET_SIZE(HDRP(bp));
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
     coalesce(bp);
-    printf("here is free end\n");
 }
 
 static void *coalesce(void *bp){
@@ -275,9 +261,6 @@ static void *coalesce(void *bp){
     //양쪽 모두 할당된 경우 -> coalescing할 공간이 없다
     if (prev_alloc && next_alloc) {
         putFreeBlock(bp);
-        if (free_listp != bp) {
-            printf("False free_listp %p != %p\n", free_listp, bp);
-        }
         return bp;//변경지점
     }
         // next가 Free인 경우
@@ -305,9 +288,6 @@ static void *coalesce(void *bp){
         bp = PREV_BLKP(bp);
     }
     putFreeBlock(bp);
-    if (free_listp != bp) {
-        printf("False free_listp %p != %p\n", free_listp, bp);
-    }
     return bp;
 }
 
@@ -320,10 +300,6 @@ void putFreeBlock(void* bp){
 
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
-    printf("In removeBlock bp = %p\n", bp);
-    printf("In removeBlock free_listp = %p\n", free_listp);
-    printf("In removeBlock PRED_FREEP(bp) = %p\n", PRED_FREEP(bp));
-    printf("In removeBlock SUCC_FREEP(bp) = %p\n", SUCC_FREEP(bp));
     if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
@@ -346,7 +322,7 @@ void removeBlock(void* bp){
 
 void *mm_realloc(void *bp, size_t size)
 {
-    printf("here is realloc - start\n");
+    //printf("here is realloc - start\n");
     if (size < 0)
         return NULL;
     else if (size == 0)
@@ -360,7 +336,6 @@ void *mm_realloc(void *bp, size_t size)
     // new_size가 old_size보다 작거나 같으면 기존 bp 그대로 사용
     if (new_size <= old_size)
     {
-        printf("here is realloc - end\n");
         return bp;
     }
     // new_size가 old_size보다 크면 사이즈 변경
@@ -371,25 +346,22 @@ void *mm_realloc(void *bp, size_t size)
     if (!next_alloc && current_size >= new_size)
     {
         removeBlock(NEXT_BLKP(bp));
-        if (free_listp != NEXT_BLKP(bp)) {
-            printf("False free_listp %p != %p\n", free_listp, NEXT_BLKP(bp));
-        }
         PUT(HDRP(bp), PACK(current_size, 1));
         PUT(FTRP(bp), PACK(current_size, 1));
-        printf("here is realloc - end\n");
+        //printf("here is realloc - end\n");
         return bp;
     }
     else
     {
-        printf("here is realloc - else case start malloc\n");
+        //printf("here is realloc - else case start malloc\n");
         void *new_bp = mm_malloc(new_size);
-        printf("here is realloc - else case end malloc\n");
-        printf("new_bp = %p\n", new_bp);
+        //printf("here is realloc - else case end malloc\n");
+        //printf("new_bp = %p\n", new_bp);
         putFreeBlock(new_bp);
         place(new_bp, new_size);
         memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
         mm_free(bp);
-        printf("here is realloc - end\n");
+        //printf("here is realloc - end\n");
         return new_bp;
     }
 }
