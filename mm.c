@@ -319,6 +319,8 @@ void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
     printf("In removeBlock bp = %p\n", bp);
     printf("In removeBlock free_listp = %p\n", free_listp);
+    printf("In removeBlock PRED_FREEP(bp) = %p\n", PRED_FREEP(bp));
+    printf("In removeBlock SUCC_FREEP(bp) = %p\n", SUCC_FREEP(bp));
     if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
