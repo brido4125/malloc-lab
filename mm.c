@@ -102,8 +102,8 @@ static void place(void *bp, size_t asize);
 void putFreeBlock(void* bp);
 void removeBlock(void* bp);
 
-char *heap_listp;
-char *free_listp;
+static char *heap_listp;
+static void *free_listp;
 /*
  * mm_init - initialize the malloc package.
  */
@@ -318,6 +318,7 @@ void putFreeBlock(void* bp){
 void removeBlock(void* bp){
     //free list의 첫번째 블록을 없앨 때
     printf("In removeBlock bp = %p\n", bp);
+    printf("In removeBlock free_listp = %p\n", free_listp);
     if (bp == free_listp) {
         PRED_FREEP(SUCC_FREEP(bp)) = NULL;
         free_listp = SUCC_FREEP(bp);
