@@ -363,7 +363,6 @@ void *mm_realloc(void *bp, size_t size)
     if (!next_alloc && current_size >= new_size)
     {
         removeBlock(NEXT_BLKP(bp));
-        sleep(1);
         if (free_listp != NEXT_BLKP(bp)) {
             printf("False free_listp %p != %p\n", free_listp, NEXT_BLKP(bp));
         }
@@ -374,6 +373,7 @@ void *mm_realloc(void *bp, size_t size)
     }
     else
     {
+        printf("here is realloc - else case");
         void *new_bp = mm_malloc(new_size);
         place(new_bp, new_size);
         memcpy(new_bp, bp, old_size); // 메모리의 특정한 부분으로부터 얼마까지의 부분을 다른 메모리 영역으로 복사해주는 함수(old_bp로부터 new_size만큼의 문자를 new_bp로 복사해라!)
